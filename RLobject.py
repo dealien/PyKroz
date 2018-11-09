@@ -4,7 +4,7 @@ from RLCONSTANTS import *
 
 
 class Object(pygame.sprite.Sprite):
-    # this is a generic object: player, monster, chest , stairs etc.
+    # this is a generic object: player, monster, chest, stairs etc.
     def __init__(self, image, x, y, kind=None):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(image).convert()

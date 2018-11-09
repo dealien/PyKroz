@@ -17,6 +17,7 @@ class Game:
         self.level_map = RLmap.Map(1, self)  # int is level
         self.font = pygame.font.Font(os.path.join(RESDIR, 'visitor1.ttf'), 18)
         self.title_font = pygame.font.Font(os.path.join(RESDIR, 'visitor1.ttf'), 36)
+        self.started = False
         self.game_over = False
         self.setTimers()
         self.setSounds()
@@ -90,6 +91,10 @@ while not game.game_over:
             pygame.quit()
             sys.exit('You quit!')
         if event.type == KEYDOWN:
+            if not game.started:
+                print('Game starting...')
+                game.level_map.panel.messages.pop()  # Removes "Press any key to start level" message when game starts
+                game.started = True
             if event.key == K_KP7:
                 game.player.move(-IMGSIZE, -IMGSIZE, game)
             if event.key == K_KP9:
@@ -133,7 +138,8 @@ while not game.game_over:
             if event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-
+        if not game.started:
+            continue
         if event.type == slow:  # USEREVENT+1
             for a in game.level_map.mobs:
                 if a.speed == 'slow':

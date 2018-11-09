@@ -1,8 +1,4 @@
-from RLCONSTANTS import *
-import RLpanel
 import random
-
-import pygame
 
 import RLpanel
 from RLCONSTANTS import *
@@ -387,6 +383,7 @@ class Map:
                     item = Object(os.path.join(IMGDIR, 'z.bmp'), x, y, 'z')
                     self.items.append(item)
                     # self.triggers.append(item)
+        game.started = False
         self.panel.messages.append('Press any key to start level')
 
     def populateLevel(self, game):  # for randomly generated levels
@@ -791,7 +788,7 @@ def renderAll(game):
 
     for a in range(len(game.level_map.map_of_level)):
         for b in range(len(game.level_map.map_of_level[a])):
-            y = a * IMGSIZE  # this sets the x and y coords by the number of pixels the image is, 16 ,32 etc.
+            y = a * IMGSIZE  # this sets the x and y coordinates by the number of pixels the image is, 16 ,32 etc.
             x = b * IMGSIZE
             game.surface.blit(images['floor'], (x, y))
 
@@ -814,9 +811,9 @@ def renderAll(game):
         lava.draw(game.surface)
     for pit in game.level_map.pits:
         pit.draw(game.surface)
-    if game.player.invisible == False:  # only draw they player if they are not invisible
+    if not game.player.invisible:  # only draw they player if they are not invisible
         game.player.draw(game.surface)
-    if game.player.whipping == True:
+    if game.player.whipping:
         game.player.whip(game)
 
     pygame.display.update()
