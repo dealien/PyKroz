@@ -1,14 +1,14 @@
-import pygame
-import RLmap, anim
-import math, random
+import random
+
+import RLmap
+import anim
 from RLCONSTANTS import *
 from RLobject import Object, Whip
-from mob import Mob, MobTile
-from pygame.locals import *
+from mob import Mob
 
 
 class Player(Object):
-    
+
     def __init__(self, image, x, y):
         Object.__init__(self, image, x, y)
         self.whips = 5
@@ -21,7 +21,7 @@ class Player(Object):
         self.weapon = Whip()
         self.whipping = False
         self.whip_frame = 1
-    
+
     def findMovingWalls(self, game):
         '''
         need to grab a circle around the player, use 3 blocks (IMGSIZE *3) = pi radius squared
@@ -34,13 +34,12 @@ class Player(Object):
         center_x = self.rect.centerx
         center_y = self.rect.centery
         radius = IMGSIZE * 10
-        
+
         for wall in game.level_map.moveable_walls:
             x = wall.rect.centerx
             y = wall.rect.centery
-            if game.isInRange(center_x, center_y, radius, x,y):
+            if game.isInRange(center_x, center_y, radius, x, y):
                 wall.moving = True
-                
 
     def teleport(self, game):
         random_space = random.choice(game.level_map.floors)
@@ -56,23 +55,21 @@ class Player(Object):
             if temp_space != old_position:
                 check_again = False
         return temp_space
-            
-            
-    
+
     def move(self, dx, dy, game):
         ''' add collision detection if player hits mob, 
         currently works if mob hits player but not the other way around'''
         new_position = self.rect.move(dx, dy)
         old_position = self.rect
-        self.rect = self.checkCollision(game, old_position, new_position )
-    
+        self.rect = self.checkCollision(game, old_position, new_position)
+
     def checkCollision(self, game, old_position, new_position):
         position = old_position
-        if new_position.collidelist(game.level_map.walls) == -1: #check to see if colliding with walls -1 is False
-            if new_position.collidelist(game.level_map.items) == -1: #check to see if colliding with items
+        if new_position.collidelist(game.level_map.walls) == -1:  # check to see if colliding with walls -1 is False
+            if new_position.collidelist(game.level_map.items) == -1:  # check to see if colliding with items
                 pass
             else:
-                for item in game.level_map.items: #iterate through items and remove them from the map and the list
+                for item in game.level_map.items:  # iterate through items and remove them from the map and the list
                     if item.rect == new_position:
                         game.level_map.items.remove(item)
                         if item.kind == 'gem' and self.gems < self.maxGems:
@@ -81,27 +78,28 @@ class Player(Object):
                             game.level_map.panel.messages.append('You pick up a gem. Points and Life!')
                         if item.kind == 'whip':
                             self.whips += 1
-                            self.score =+ 10
+                            self.score = + 10
                             game.level_map.panel.messages.append('You pick up a Whip.')
                         if item.kind == 'gold':
                             game.gold.play()
                             self.score += 500
                             game.level_map.panel.messages.append('You pick up a pile of gold.')
                         if item.kind == 'teleport':
-                            self.teleports +=1
+                            self.teleports += 1
                             self.score += 10
                             game.level_map.panel.messages.append('A teleport scroll.')
                         if item.kind == 'key':
-                            self.keys +=1
+                            self.keys += 1
                             self.score += 10
                             game.level_map.panel.messages.append('A key.')
                         if item.kind == 'chest':
-                            gem = random.randint(0,3)
-                            whip = random.randint(0,3)
-                            game.level_map.panel.messages.append('You open a treasure chest and find {0} gems and {1} whips.'.format(gem,whip))
+                            gem = random.randint(0, 3)
+                            whip = random.randint(0, 3)
+                            game.level_map.panel.messages.append(
+                                'You open a treasure chest and find {0} gems and {1} whips.'.format(gem, whip))
                             self.gems += gem
                             self.whips += whip
-                            self.score += 50 
+                            self.score += 50
                         if item.kind == 'whip_ring':
                             self.weapon.power += 1
                             self.score += 1000
@@ -119,59 +117,59 @@ class Player(Object):
                             for wall in game.level_map.breakable:
                                 x = wall.rect.centerx
                                 y = wall.rect.centery
-                                if game.isInRange(center_x, center_y, radius, x,y):
+                                if game.isInRange(center_x, center_y, radius, x, y):
                                     game.level_map.breakable.remove(wall)
                                     game.level_map.moveable_walls.remove(wall)
-                        if item.kind == 'k' or item.kind =='r' or item.kind == 'o' or item.kind == 'z':
+                        if item.kind == 'k' or item.kind == 'r' or item.kind == 'o' or item.kind == 'z':
                             game.level_map.kroz.append(item.kind)
-                            if len(game.level_map.kroz) == 4: 
-                                if game.level_map.kroz[0] == 'k' and game.level_map.kroz[1] == 'r' and game.level_map.kroz[2] == 'o' and game.level_map.kroz[3] == 'z':
+                            if len(game.level_map.kroz) == 4:
+                                if game.level_map.kroz[0] == 'k' and game.level_map.kroz[1] == 'r' and \
+                                        game.level_map.kroz[2] == 'o' and game.level_map.kroz[3] == 'z':
                                     game.player.score += 10000
-                                    #play a sound
+                                    # play a sound
                                     game.level_map.panel.messages.append('You get the KROZ 10,000 point bonus!')
                         if item.kind == 'tele_trap':
                             position = self.teleport(game)
                             return position
-#---SPELLS-----------------------------------------                        
+                        # ---SPELLS-----------------------------------------
                         if item.kind == 'freeze':
                             game.stopTimers()
                             self.score += 10
-                            game.changeTimer(check_things,ETERNITY)
+                            game.changeTimer(check_things, ETERNITY)
                             game.level_map.panel.messages.append('You trigger a freeze monster spell!')
                         if item.kind == 'slow':
                             game.slowTimers()
                             self.score += 10
-                            game.changeTimer(check_things,ETERNITY)
+                            game.changeTimer(check_things, ETERNITY)
                             game.level_map.panel.messages.append('You trigger a slow monster spell!')
                         if item.kind == 'fast':
                             game.speedTimers()
                             self.score += 10
-                            game.changeTimer(check_things,ETERNITY)
+                            game.changeTimer(check_things, ETERNITY)
                             game.level_map.panel.messages.append('You trigger a speed monster spell!')
                         if item.kind == 'invisibility':
                             game.player.invisible = True
                             self.score += 100
-                            game.changeTimer(check_things,ETERNITY)
+                            game.changeTimer(check_things, ETERNITY)
                             game.level_map.panel.messages.append('You trigger an invisibiltiy spell!')
                         if item.kind == 'more_monsters':
-                            for a in range(20,50):
+                            for a in range(20, 50):
                                 space = random.choice(game.level_map.floors)
                                 x = space.left
                                 y = space.top
-                                mob = Mob(os.path.join(IMGDIR,'gnome.bmp'), x , y, 1, 'slow')
+                                mob = Mob(os.path.join(IMGDIR, 'gnome.bmp'), x, y, 1, 'slow')
                                 game.level_map.mobs.append(mob)
-                        
+
                         if item.kind == 'tablet':
                             game.player.score += 10000
-                            game.level_map.panel.messages.append(item.message)                  
-#TRIGGERS-----------------------------------------------------------------------------------------------------------------------------------
-            if new_position.collidelistall(game.level_map.triggers): #triggers that set of special events etc
+                            game.level_map.panel.messages.append(item.message)
+                        # TRIGGERS-----------------------------------------------------------------------------------------------------------------------------------
+            if new_position.collidelistall(game.level_map.triggers):  # triggers that set of special events etc
                 for trigger in game.level_map.triggers:
                     if trigger.rect == new_position:
                         trigger.trigger(game)
-                       
-                
-            if new_position.collidelistall(game.level_map.doors): #locked doors
+
+            if new_position.collidelistall(game.level_map.doors):  # locked doors
                 for item in game.level_map.doors:
                     if item.rect == new_position:
                         if self.keys > 0:
@@ -180,31 +178,31 @@ class Player(Object):
                         else:
                             game.hit_wall.play()
                             new_position = old_position
-                            
-            if new_position.collidelistall(game.level_map.mobs): #collision with mobs
+
+            if new_position.collidelistall(game.level_map.mobs):  # collision with mobs
                 for mob in game.level_map.mobs:
                     if mob.rect == new_position:
                         game.mob_hit_player.play()
                         self.gems -= mob.damage
                         self.score += 10
                         game.level_map.mobs.remove(mob)
-                        
-            
-            if new_position.collidelistall(game.level_map.breakable): #breakable is a list of breakable walls, needed to seperate from regular walls
+
+            if new_position.collidelistall(
+                    game.level_map.breakable):  # breakable is a list of breakable walls, needed to seperate from regular walls
                 for wall in game.level_map.breakable:
                     if wall.rect == new_position:
                         game.hit_wall.play()
                         new_position = old_position
-                        
-            if new_position.collidelistall(game.level_map.hidden_walls): # this is the hidden walls, maybe only level 1? when bumped it appears
-                for wall in game.level_map.hidden_walls: 
+
+            if new_position.collidelistall(
+                    game.level_map.hidden_walls):  # this is the hidden walls, maybe only level 1? when bumped it appears
+                for wall in game.level_map.hidden_walls:
                     if wall == new_position:
                         game.hit_wall.play()
                         new_position = old_position
                         game.level_map.walls.append(wall)
-                
-                
-            if new_position.collidelistall(game.level_map.exits): #did they get to the level exit?
+
+            if new_position.collidelistall(game.level_map.exits):  # did they get to the level exit?
                 for level_exit in game.level_map.exits:
                     if level_exit == new_position:
                         self.score += 50
@@ -215,14 +213,14 @@ class Player(Object):
                         game.level_map.makeMap(game)
                         game.level_map.panel.messages = []
                         RLmap.renderAll(game)
-                        
+
                         '''while not pygame.event.wait().type in (QUIT, KEYDOWN):
                             pass'''
                         return
             if new_position.collidelistall(game.level_map.pits):
                 anim.pitFall(game)
-                
-            if new_position.collidelistall(game.level_map.lava): #lava collision
+
+            if new_position.collidelistall(game.level_map.lava):  # lava collision
                 for lava in game.level_map.lava:
                     if lava.rect == new_position:
                         game.lava.play()
@@ -237,7 +235,7 @@ class Player(Object):
                 self.score -= 10
                 new_position = old_position
                 return'''
-                        
+
             '''
             take this out to try and return position instwead
             self.rect = new_position
@@ -245,22 +243,21 @@ class Player(Object):
         else:
             game.hit_wall.play()
             self.rect = old_position'''
-            
+
             position = new_position
-        
+
         else:
             game.hit_wall.play()
             position = old_position
-            
-        return position    
 
-        
+        return position
+
     def whip(self, game):
-        #if self.whip_frame >= 8:
-            #whip_frame = 1
-        
+        # if self.whip_frame >= 8:
+        # whip_frame = 1
+
         if self.whips > 0:
-            
+
             if self.whip_frame == 1:
                 new_position = self.rect.move(0, -IMGSIZE)
                 self.weapon.update(new_position, 1)
@@ -268,7 +265,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-            
+
             if self.whip_frame == 2:
                 new_position = self.rect.move(-IMGSIZE, -IMGSIZE)
                 self.weapon.update(new_position, 2)
@@ -276,7 +273,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-         
+
             if self.whip_frame == 3:
                 new_position = self.rect.move(-IMGSIZE, 0)
                 self.weapon.update(new_position, 3)
@@ -284,7 +281,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-            
+
             if self.whip_frame == 4:
                 new_position = self.rect.move(-IMGSIZE, IMGSIZE)
                 self.weapon.update(new_position, 4)
@@ -292,7 +289,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-            
+
             if self.whip_frame == 5:
                 new_position = self.rect.move(0, IMGSIZE)
                 self.weapon.update(new_position, 1)
@@ -300,7 +297,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-            
+
             if self.whip_frame == 6:
                 new_position = self.rect.move(IMGSIZE, IMGSIZE)
                 self.weapon.update(new_position, 2)
@@ -308,7 +305,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-            
+
             if self.whip_frame == 7:
                 new_position = self.rect.move(IMGSIZE, 0)
                 self.weapon.update(new_position, 3)
@@ -316,7 +313,7 @@ class Player(Object):
                 self.weapon.checkCollision(game)
                 self.whip_frame += 1
                 return
-                
+
             if self.whip_frame == 8:
                 new_position = self.rect.move(IMGSIZE, -IMGSIZE)
                 self.weapon.update(new_position, 4)
@@ -326,6 +323,6 @@ class Player(Object):
                 self.whips -= 1
                 self.whipping = False
                 return
-           
+
         else:
             pass
